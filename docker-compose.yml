@@ -1,0 +1,43 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: savethehuman_db
+    environment:
+      POSTGRES_DB: savethehuman
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d savethehuman"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: savethehuman_app
+    ports:
+      - "8080:8080"
+    environment:
+      # Override DB host from localhost to the service name
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/savethehuman
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      # Gemini API Key (override here or pass via .env file)
+      AI_API_KEY: ${AI_API_KEY:-AIzaSyBOi6Y9YCvTW-OY8fzpnhU76uNiECjl140}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+volumes:
+  postgres_data:
