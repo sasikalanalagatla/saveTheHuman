@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Save The Human - Result</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #0f172a;
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            padding: 4rem 3rem;
+            border-radius: 32px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 500px;
+            width: 90%;
+            animation: zoomIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .win h1 { color: var(--success); }
+        .lose h1 { color: var(--danger); }
+
+        .result-message {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .correct-word {
+            display: block;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-top: 1rem;
+            letter-spacing: 0.2rem;
+            color: var(--primary);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 2rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        .icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            z-index: 100;
+        }
+        .nav-link { color: #94a3b8; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover { color: #f8fafc; }
+        .logout-btn {
+            background: rgba(239,68,68,0.15); color: #f87171;
+            border: 1px solid rgba(239,68,68,0.3); padding: 0.4rem 1.2rem;
+            border-radius: 8px; font-size: 0.9rem; cursor: pointer;
+            font-weight: 600; transition: all 0.2s; text-decoration: none;
+        }
+        .logout-btn:hover { background: rgba(239,68,68,0.3); }
+        body { padding-top: 60px; }
+    </style>
+</head>
+<body>
+    <nav class="nav-bar">
+        <a href="/level-select" class="nav-link">← Back to Levels</a>
+        <form th:action="@{/logout}" method="post" style="display:inline;">
+            <button type="submit" class="logout-btn">Logout</button>
+        </form>
+    </nav>
+    <div class="result-card" th:classappend="${status == 'win' ? 'win' : 'lose'}">
+        <span class="icon" th:text="${status == 'win' ? '🎉' : '💀'}"></span>
+        <h1 th:text="${status == 'win'} ? (${levelCleared} ? 'Level ' + currentLevel + ' Cleared!' : 'Question Solved!') : 'Game Over'">Status</h1>
+        
+        <div class="result-message">
+            <span th:if="${status == 'win'}">
+                <span th:if="${!levelCleared}">Great job! You've solved this word. Keep going to clear Level <span th:text="${currentLevel}">1</span>!</span>
+                <span th:if="${levelCleared && !isMasterLevel}">Amazing! You've successfully cleared all 5 questions for Level <span th:text="${currentLevel}">1</span>. Prepare for the next challenge!</span>
+                <span th:if="${isMasterLevel}">CONGRATULATIONS GRAND MASTER! You've cleared all 50 levels and proved your ultimate word-guessing skills!</span>
+            </span>
+            <span th:if="${status == 'lose'}">Oh no! The human fell. Your journey ends at Level <span th:text="${currentLevel}">1</span>.</span>
+            
+            <div th:if="${status == 'lose'}">
+                The correct word was: 
+                <span class="correct-word" th:text="${targetWord}">WORD</span>
+            </div>
+            <div th:if="${status == 'win'}">
+                The word was: 
+                <span class="correct-word" th:text="${displayWord}">WORD</span>
+            </div>
+        </div>
+
+        <div class="actions">
+            <!-- Win: level not yet cleared → Next Question (stay on same level) -->
+            <form th:if="${status == 'win' && !levelCleared}" th:action="@{/start}" method="post">
+                <input type="hidden" name="level" th:value="${currentLevel}">
+                <button type="submit" class="btn">Next Question</button>
+            </form>
+
+            <!-- Win: level cleared → Go to Level Select (choose next or rest) -->
+            <a th:if="${status == 'win' && levelCleared && !isMasterLevel}" href="/level-select" class="btn">Choose Next Level</a>
+
+            <!-- Win: master level cleared -->
+            <form th:if="${status == 'win' && isMasterLevel}" th:action="@{/start}" method="post">
+                <input type="hidden" name="level" value="1">
+                <button type="submit" class="btn">Restart Journey</button>
+            </form>
+
+            <!-- Lose → Try Again (same level) or go back to choose -->
+            <form th:if="${status == 'lose'}" th:action="@{/start}" method="post">
+                <input type="hidden" name="level" th:value="${currentLevel}">
+                <button type="submit" class="btn">Try Again</button>
+            </form>
+            <a th:if="${status == 'lose'}" href="/level-select" class="btn" style="background: rgba(255,255,255,0.1); margin-top: 1rem;">Back to Levels</a>
+        </div>
+
+    </div>
+</body>
+</html>

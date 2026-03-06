@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Save The Human - Game</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #0f172a;
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            padding: 3rem;
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 1000px;
+            width: 95%;
+            margin: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .game-board {
+                grid-template-columns: 1fr;
+            }
+            .animation-area {
+                order: -1;
+            }
+        }
+
+        .info-area {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hint-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            margin-bottom: 2rem;
+        }
+
+        .hint-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .hint-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .word-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 0.5rem;
+            margin-bottom: 2rem;
+            font-family: 'Courier New', monospace;
+            min-height: 3.5rem;
+        }
+
+        .chances {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            color: var(--text-muted);
+        }
+
+        .chances span {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .message {
+            margin-bottom: 1.5rem;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .input-form {
+            display: flex;
+            gap: 1rem;
+        }
+
+        input[type="text"] {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.8rem;
+            color: white;
+            font-size: 1.2rem;
+            width: 60px;
+            text-align: center;
+            text-transform: uppercase;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+        }
+
+        .guess-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .guess-btn:hover {
+            filter: brightness(1.2);
+            transform: scale(1.05);
+        }
+
+        /* Animation Area */
+        .animation-area {
+            position: relative;
+            height: 400px;
+            background: linear-gradient(to bottom, #1e293b, #0f172a);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .cliff {
+            position: absolute;
+            top: 100px;
+            left: 0;
+            width: 40%;
+            height: 300px;
+            background: #334155;
+            border-radius: 0 20px 0 0;
+        }
+
+        .human {
+            position: absolute;
+            font-size: 3rem;
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Stages */
+        .stage-0 { top: 45px; left: 20%; transform: rotate(0deg); }
+        .stage-1 { top: 45px; left: 35%; transform: rotate(15deg); }
+        .stage-2 { top: 60px; left: 38%; transform: rotate(45deg); }
+        .stage-3 { top: 120px; left: 45%; transform: rotate(90deg); }
+        .stage-4 { top: 200px; left: 55%; transform: rotate(135deg); }
+        .stage-5 { top: 280px; left: 65%; transform: rotate(180deg); }
+        .stage-6 { top: 450px; left: 75%; transform: rotate(270deg); }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 20px;
+            background: #1e293b;
+        }
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            z-index: 100;
+        }
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+        .nav-link:hover { color: var(--text); }
+        .logout-btn {
+            background: rgba(239,68,68,0.15);
+            color: #f87171;
+            border: 1px solid rgba(239,68,68,0.3);
+            padding: 0.4rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .logout-btn:hover { background: rgba(239,68,68,0.3); }
+        body { padding-top: 60px; }
+    </style>
+</head>
+<body>
+    <nav class="nav-bar">
+        <a href="/level-select" class="nav-link">← Back to Levels</a>
+        <span style="color: var(--text-muted); font-size: 0.9rem;" th:text="${username}"></span>
+        <form th:action="@{/logout}" method="post" style="display:inline;">
+            <button type="submit" class="logout-btn">Logout</button>
+        </form>
+    </nav>
+    <div class="game-board">
+        <div class="info-area">
+            <div class="hint-box">
+                <div class="hint-label">
+                    Level <span th:text="${currentLevel}">1</span> - Hint 
+                    <span th:if="${isAlreadyCompleted}" style="color: #4ade80; margin-left: 10px; font-size: 0.8rem; border: 1px solid #4ade80; padding: 2px 6px; border-radius: 4px;">✅ COMPLETED</span>
+                </div>
+                <div class="hint-text" th:text="${hint}">Hint goes here</div>
+            </div>
+
+            <div class="word-display" th:text="${displayWord}">_ _ _ _</div>
+
+            <div class="chances">
+                Chances Used: <span th:text="${wrongGuesses}">0</span> / <span th:text="${maxChances}">6</span>
+            </div>
+
+            <div th:if="${message != ''}" class="message" th:text="${message}">Message</div>
+
+            <form th:action="@{/guess}" method="post" class="input-form">
+                <input type="text" name="letter" maxlength="1" required autofocus autocomplete="off">
+                <button type="submit" class="guess-btn">Guess</button>
+            </form>
+        </div>
+
+        <div class="animation-area">
+            <div class="cliff"></div>
+            <div class="human" th:classappend="'stage-' + ${wrongGuesses}">🧍</div>
+            <div class="ground"></div>
+        </div>
+    </div>
+</body>
+</html>
