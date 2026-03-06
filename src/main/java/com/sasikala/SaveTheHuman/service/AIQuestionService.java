@@ -26,8 +26,8 @@ public class AIQuestionService {
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
     public void generateInitialQuestionsForUser(User user) {
-        if (apiKey == null || apiKey.isEmpty() || apiKey.equals("YOUR_API_KEY_HERE")) {
-            throw new RuntimeException("AI API Key is missing. Please configure 'ai.api.key' in application.properties.");
+        if (apiKey == null || apiKey.isBlank() || apiKey.startsWith("YOUR_")) {
+            throw new RuntimeException("AI API Key is not configured. Please set the AI_API_KEY environment variable.");
         }
 
         System.out.println("Starting synchronous generation for Level 1-5 for user: " + user.getUsername());

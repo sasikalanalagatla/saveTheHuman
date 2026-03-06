@@ -17,7 +17,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false, columnDefinition = "integer default 1")
+    @Column(nullable = false, columnDefinition = "integer default 1", insertable = true, updatable = true)
     private int currentLevel = 1;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
