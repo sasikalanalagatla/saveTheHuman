@@ -20,6 +20,9 @@ public class User {
     @Column(nullable = false, columnDefinition = "integer default 1", insertable = true, updatable = true)
     private int currentLevel = 1;
 
+    @Column
+    private String difficultyLevel;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Question> questions;
 
@@ -41,6 +44,9 @@ public class User {
 
     public int getCurrentLevel() { return currentLevel; }
     public void setCurrentLevel(int currentLevel) { this.currentLevel = currentLevel; }
+
+    public String getDifficultyLevel() { return difficultyLevel; }
+    public void setDifficultyLevel(String difficultyLevel) { this.difficultyLevel = difficultyLevel; }
 
     public List<Question> getQuestions() { return questions; }
     public void setQuestions(List<Question> questions) { this.questions = questions; }

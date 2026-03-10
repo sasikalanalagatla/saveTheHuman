@@ -60,12 +60,23 @@ public class AIQuestionService {
     }
 
     private List<Question> fetchBatchFromAI(User user, int start, int end) {
+        String difficulty = user.getDifficultyLevel() != null ? user.getDifficultyLevel() : "Adult";
+        String difficultyInstructions = "";
+        
+        switch (difficulty) {
+            case "Child" -> difficultyInstructions = "Use very simple words (3-5 letters), basic general knowledge, and extremely easy-to-understand hints suitable for young children.";
+            case "Professional" -> difficultyInstructions = "Use highly obscure facts, advanced vocabulary, complex trivia, and subtle, challenging hints suitable for experts.";
+            default -> difficultyInstructions = "Use standard general knowledge, common facts, and clear but descriptive hints suitable for adults.";
+        }
+
         String prompt = String.format(
             "Generate exactly 5 General Knowledge (non-political) questions for each level from %d to %d. " +
+            "%s " +
+            "The difficulty should progressively increase as the level number gets higher. " +
             "For each question, provide a 'word' (one word, uppercase) and a 'hint' (a clear descriptive sentence describing the word). " +
-            "Hints must be clear clues. Return ONLY a JSON array of objects with keys: level (int), word (string), hint (string). " +
+            "Return ONLY a JSON array of objects with keys: level (int), word (string), hint (string). " +
             "No preamble, no markdown formatting, just the raw JSON array.",
-            start, end
+            start, end, difficultyInstructions
         );
 
         // Gemini Request Format

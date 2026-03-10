@@ -112,47 +112,44 @@
             to { opacity: 1; transform: translateX(0); }
         }
 
-        .input-form {
-            display: flex;
-            gap: 1rem;
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+            max-width: 500px;
         }
 
-        input[type="text"] {
+        .key-btn {
             background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.8rem 0;
             color: white;
-            font-size: 1.2rem;
-            width: 60px;
-            text-align: center;
-            text-transform: uppercase;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--primary);
-        }
-
-        .guess-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.8rem 2rem;
-            border-radius: 12px;
             font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
+            text-transform: uppercase;
         }
 
-        .guess-btn:hover {
-            filter: brightness(1.2);
-            transform: scale(1.05);
+        .key-btn:hover:not(:disabled) {
+            background: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
-        /* Animation Area */
+        .key-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: rgba(255, 255, 255, 0.05);
+            border-color: transparent;
+        }
+
+        .key-btn.correct { background: var(--success); }
+        .key-btn.incorrect { background: var(--danger); }
+
+        /* Hangman SVG */
         .animation-area {
             position: relative;
             height: 400px;
@@ -160,39 +157,34 @@
             border-radius: 20px;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .cliff {
-            position: absolute;
-            top: 100px;
-            left: 0;
-            width: 40%;
-            height: 300px;
-            background: #334155;
-            border-radius: 0 20px 0 0;
-        }
-
-        .human {
-            position: absolute;
-            font-size: 3rem;
-            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        /* Stages */
-        .stage-0 { top: 45px; left: 20%; transform: rotate(0deg); }
-        .stage-1 { top: 45px; left: 35%; transform: rotate(15deg); }
-        .stage-2 { top: 60px; left: 38%; transform: rotate(45deg); }
-        .stage-3 { top: 120px; left: 45%; transform: rotate(90deg); }
-        .stage-4 { top: 200px; left: 55%; transform: rotate(135deg); }
-        .stage-5 { top: 280px; left: 65%; transform: rotate(180deg); }
-        .stage-6 { top: 450px; left: 75%; transform: rotate(270deg); }
-
-        .ground {
-            position: absolute;
-            bottom: 0;
+        .hangman-svg {
             width: 100%;
-            height: 20px;
-            background: #1e293b;
+            height: 100%;
+        }
+
+        .hangman-part {
+            fill: none;
+            stroke: #f8fafc;
+            stroke-width: 4;
+            stroke-linecap: round;
+            transition: opacity 0.5s ease;
+            opacity: 0;
+        }
+
+        .hangman-part.visible {
+            opacity: 1;
+        }
+
+        .hangman-frame {
+            fill: none;
+            stroke: #475569;
+            stroke-width: 5;
+            stroke-linecap: round;
         }
         .nav-bar {
             position: fixed;
@@ -258,16 +250,50 @@
 
             <div th:if="${message != ''}" class="message" th:text="${message}">Message</div>
 
-            <form th:action="@{/guess}" method="post" class="input-form">
-                <input type="text" name="letter" maxlength="1" required autofocus autocomplete="off">
-                <button type="submit" class="guess-btn">Guess</button>
-            </form>
+            <div class="keyboard">
+                <form th:each="letter : ${alphabet}" th:action="@{/guess}" method="post" style="display: contents;">
+                    <input type="hidden" name="letter" th:value="${letter}">
+                    <button type="submit" 
+                            class="key-btn" 
+                            th:text="${letter}"
+                            th:disabled="${guessedLetters.contains(letter)}">
+                    </button>
+                </form>
+            </div>
         </div>
 
         <div class="animation-area">
-            <div class="cliff"></div>
-            <div class="human" th:classappend="'stage-' + ${wrongGuesses}">🧍</div>
-            <div class="ground"></div>
+            <svg class="hangman-svg" viewBox="0 0 300 380" xmlns="http://www.w3.org/2000/svg">
+                <!-- Gallows Frame (always visible) -->
+                <line class="hangman-frame" x1="20" y1="360" x2="280" y2="360"/>  <!-- ground -->
+                <line class="hangman-frame" x1="60"  y1="360" x2="60"  y2="20"/>  <!-- pole -->
+                <line class="hangman-frame" x1="60"  y1="20"  x2="180" y2="20"/>  <!-- top beam -->
+                <line class="hangman-frame" x1="180" y1="20"  x2="180" y2="60"/>  <!-- rope -->
+
+                <!-- 1: Head -->
+                <circle class="hangman-part" th:classappend="${wrongGuesses >= 1} ? 'visible' : ''"
+                        cx="180" cy="90" r="30" stroke="#f8fafc"/>
+
+                <!-- 2: Left Arm -->
+                <line class="hangman-part" th:classappend="${wrongGuesses >= 2} ? 'visible' : ''"
+                      x1="180" y1="120" x2="140" y2="170"/>
+
+                <!-- 3: Right Arm -->
+                <line class="hangman-part" th:classappend="${wrongGuesses >= 3} ? 'visible' : ''"
+                      x1="180" y1="120" x2="220" y2="170"/>
+
+                <!-- 4: Body -->
+                <line class="hangman-part" th:classappend="${wrongGuesses >= 4} ? 'visible' : ''"
+                      x1="180" y1="120" x2="180" y2="240"/>
+
+                <!-- 5: Left Leg -->
+                <line class="hangman-part" th:classappend="${wrongGuesses >= 5} ? 'visible' : ''"
+                      x1="180" y1="240" x2="140" y2="300"/>
+
+                <!-- 6: Right Leg -->
+                <line class="hangman-part" th:classappend="${wrongGuesses >= 6} ? 'visible' : ''"
+                      x1="180" y1="240" x2="220" y2="300"/>
+            </svg>
         </div>
     </div>
 </body>

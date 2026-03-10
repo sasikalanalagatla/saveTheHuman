@@ -64,20 +64,44 @@ public class GameController {
         }
         User user = new User(username, passwordEncoder.encode(password));
         userRepository.save(user);
+        // Removed immediate AI generation - will happen after difficulty selection
+        return "redirect:/login?registered=true";
+    }
+
+    @GetMapping("/difficulty-select")
+    public String difficultySelect() {
+        return "difficulty-select";
+    }
+
+    @PostMapping("/set-difficulty")
+    @jakarta.transaction.Transactional
+    public String setDifficulty(@RequestParam String difficulty, 
+                               @AuthenticationPrincipal UserDetails userDetails,
+                               HttpSession session) {
+        User user = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
+        if (user == null) return "redirect:/login";
+
+        user.setDifficultyLevel(difficulty);
+        userRepository.save(user);
+
+        // Clear old questions
+        questionRepository.deleteByUser(user);
+        questionRepository.flush(); // Ensure deletion is committed before generation
+
+        // Generate new questions
         try {
             aiQuestionService.generateInitialQuestionsForUser(user);
             aiQuestionService.generateRemainingQuestionsAsync(user);
         } catch (Exception e) {
-            // Keep user but notify them that AI failed
-            session.setAttribute("error", "AI Generation Failed: " + e.getMessage());
-            return "redirect:/login?error=ai_failed";
+            session.setAttribute("message", "AI Generation Error: " + e.getMessage());
         }
-        return "redirect:/login?registered=true";
+
+        return "redirect:/level-select";
     }
 
     @GetMapping("/start-auth")
     public String startAuthTransition(HttpSession session) {
-        return "redirect:/level-select";
+        return "redirect:/difficulty-select";
     }
 
     @GetMapping("/level-select")
@@ -166,6 +190,8 @@ public class GameController {
         model.addAttribute("currentLevel", currentLevel != null ? currentLevel : 1);
         model.addAttribute("isAlreadyCompleted", isLevelCompleted);
         model.addAttribute("username", userDetails.getUsername());
+        model.addAttribute("guessedLetters", guessedLetters);
+        model.addAttribute("alphabet", "ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray());
 
         if (gameService.isGameWon(targetWord, guessedLetters)) {
             User user = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
@@ -217,7 +243,7 @@ public class GameController {
         int wrongGuesses = (int) session.getAttribute("wrongGuesses");
 
         if (guessedLetters.contains(letter)) {
-            session.setAttribute("message", "You already guessed '" + letter + "'");
+            // No message needed per user request, just redirect
         } else if (!Character.isLetter(letter)) {
              session.setAttribute("message", "Please enter a valid letter.");
         } else {

@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface QuestionRepository extends JpaRepository<Question, Long> {
     List<Question> findByUserAndLevel(User user, Integer level);
     Optional<Question> findByUserAndLevelAndCompleted(User user, Integer level, boolean completed);
+    void deleteByUser(User user);
 }

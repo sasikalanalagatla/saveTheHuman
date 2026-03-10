@@ -44,6 +44,12 @@
             to { opacity: 1; transform: scale(1); }
         }
 
+        @keyframes popIn {
+            0%   { transform: scale(0); opacity: 0; }
+            70%  { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+
         h1 {
             font-size: 3rem;
             margin-bottom: 1.5rem;
@@ -125,22 +131,22 @@
     </nav>
     <div class="result-card" th:classappend="${status == 'win' ? 'win' : 'lose'}">
         <span class="icon" th:text="${status == 'win' ? '🎉' : '💀'}"></span>
-        <h1 th:text="${status == 'win'} ? (${levelCleared} ? 'Level ' + currentLevel + ' Cleared!' : 'Question Solved!') : 'Game Over'">Status</h1>
-        
+        <h1 th:text="${status == 'win'} ? (${levelCleared} ? 'Level ' + currentLevel + ' Cleared!' : 'Word Guessed!') : 'Game Over'">Status</h1>
+
         <div class="result-message">
             <span th:if="${status == 'win'}">
-                <span th:if="${!levelCleared}">Great job! You've solved this word. Keep going to clear Level <span th:text="${currentLevel}">1</span>!</span>
-                <span th:if="${levelCleared && !isMasterLevel}">Amazing! You've successfully cleared all 5 questions for Level <span th:text="${currentLevel}">1</span>. Prepare for the next challenge!</span>
-                <span th:if="${isMasterLevel}">CONGRATULATIONS GRAND MASTER! You've cleared all 50 levels and proved your ultimate word-guessing skills!</span>
+                <span th:if="${!levelCleared}">The Saint arrived just in time! 🌟 Keep going to clear Level <span th:text="${currentLevel}">1</span>!</span>
+                <span th:if="${levelCleared && !isMasterLevel}">The Saint saved the day! All 5 questions for Level <span th:text="${currentLevel}">1</span> cleared. Evil retreats... for now!</span>
+                <span th:if="${isMasterLevel}">LEGENDARY SAVIOUR! You've outwitted evil across all 50 levels. The human is safe forever! 🏆</span>
             </span>
-            <span th:if="${status == 'lose'}">Oh no! The human fell. Your journey ends at Level <span th:text="${currentLevel}">1</span>.</span>
-            
+            <span th:if="${status == 'lose'}">The monster closed in too fast! The human was captured at Level <span th:text="${currentLevel}">1</span>.</span>
+
             <div th:if="${status == 'lose'}">
-                The correct word was: 
+                The correct word was:
                 <span class="correct-word" th:text="${targetWord}">WORD</span>
             </div>
             <div th:if="${status == 'win'}">
-                The word was: 
+                The word was:
                 <span class="correct-word" th:text="${displayWord}">WORD</span>
             </div>
         </div>

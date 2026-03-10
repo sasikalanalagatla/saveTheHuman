@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Difficulty - Save The Human</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+        :root {
+            --bg-dark: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --accent: #38bdf8;
+            --text: #f8fafc;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark), #1e293b);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 3rem; color: var(--accent); text-align: center; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .difficulty-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .difficulty-card:hover {
+            transform: translateY(-15px);
+            border-color: var(--accent);
+            background: rgba(56, 189, 248, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        .difficulty-card h2 { margin: 0; font-size: 1.8rem; }
+        .difficulty-card p { color: #94a3b8; font-size: 1rem; line-height: 1.5; }
+        .difficulty-card .badge {
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .child .badge { background: #4ade80; color: #064e3b; }
+        .adult .badge { background: #fca5a5; color: #7f1d1d; }
+        .professional .badge { background: #f472b6; color: #700d3d; }
+        
+        button[type="submit"] { display: none; }
+        form { width: 100%; }
+    </style>
+</head>
+<body>
+    <h1>Choose Your Intelligence Level</h1>
+    <div class="grid">
+        <form th:action="@{/set-difficulty}" method="post" class="child">
+            <input type="hidden" name="difficulty" value="Child">
+            <div class="difficulty-card" onclick="this.parentElement.submit()">
+                <span class="badge">Easy</span>
+                <h2>Child</h2>
+                <p>Simple words, basic general knowledge, and fun hints. Perfect for young learners!</p>
+            </div>
+        </form>
+
+        <form th:action="@{/set-difficulty}" method="post" class="adult">
+            <input type="hidden" name="difficulty" value="Adult">
+            <div class="difficulty-card" onclick="this.parentElement.submit()">
+                <span class="badge">Medium</span>
+                <h2>Adult</h2>
+                <p>Standard general knowledge and common facts. A balanced challenge for everyone.</p>
+            </div>
+        </form>
+
+        <form th:action="@{/set-difficulty}" method="post" class="professional">
+            <input type="hidden" name="difficulty" value="Professional">
+            <div class="difficulty-card" onclick="this.parentElement.submit()">
+                <span class="badge">Hard</span>
+                <h2>Professional</h2>
+                <p>Obscure facts, advanced vocabulary, and complex trivia. Only for true experts!</p>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
